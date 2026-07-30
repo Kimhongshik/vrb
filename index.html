@@ -280,6 +280,11 @@
   }
 </style>
 
+<!-- 엑셀 다운로드/업로드 기능용 라이브러리. claude.ai 아티팩트 미리보기는 CSP로 외부 스크립트를 막아 이 부분만 동작하지 않고,
+     GitHub Pages(kimhongshik.github.io/vrb) 등 실제 호스팅 환경에서는 정상 로드됩니다. 로드 실패 시 앱은 정상 동작하며
+     엑셀 버튼을 누르면 안내 메시지만 표시됩니다(아래 xlsxAvailable() 가드 참고). -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <div class="app" id="app"></div>
 <div id="toastHost" aria-live="polite"></div>
 
@@ -1052,6 +1057,109 @@
     render();
   }
 
+  // ---- 엑셀 다운로드/업로드 공통 유틸 (SheetJS 필요 — claude.ai 아티팩트 미리보기에서는 CSP로 로드되지 않음) ----
+  function xlsxAvailable(){ return typeof XLSX !== 'undefined'; }
+  function xlsxWarnUnavailable(){
+    showToast('엑셀 기능은 이 아티팩트 미리보기에서는 동작하지 않습니다. GitHub Pages(kimhongshik.github.io/vrb)에서 이용해주세요.', 'warn');
+  }
+  function exportSheet(filename, sheetName, headers, rows){
+    if(!xlsxAvailable()){ xlsxWarnUnavailable(); return; }
+    try{
+      var aoa = [headers].concat(rows);
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      XLSX.writeFile(wb, filename);
+    }catch(err){
+      showToast('엑셀 파일 생성 중 오류: '+(err&&err.message?err.message:err), 'warn');
+    }
+  }
+  // callback(dataRows) — 헤더 행을 제외한 나머지 행(각 행은 셀 값 배열)만 전달
+  function importSheetFile(fileInput, callback){
+    if(!xlsxAvailable()){ xlsxWarnUnavailable(); return; }
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    if(!file){ showToast('업로드할 엑셀 파일(.xlsx)을 선택해주세요.', 'warn'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+        rows.shift(); // 헤더 행 제거
+        rows = rows.filter(function(r){ return r.some(function(c){ return String(c||'').trim()!==''; }); });
+        callback(rows);
+      }catch(err){
+        showToast('엑셀 파일을 읽는 중 오류: '+(err&&err.message?err.message:err), 'warn');
+      }
+    };
+    reader.onerror = function(){ showToast('파일을 읽는 중 오류가 발생했습니다.', 'warn'); };
+    reader.readAsArrayBuffer(file);
+  }
+  function cellStr(v){ return (v==null)? '' : String(v).trim(); }
+  function cellNum(v){ var n=Number(String(v==null?'':v).replace(/,/g,'')); return isFinite(n)?n:0; }
+
+  // ---- 엑셀 행 <-> 데이터 매핑 (각 엔티티별) ----
+  function wbsTaskToRow(t, reportDate){
+    return [t.domain, t.activity, t.name, t.startDate||'', t.endDate||'',
+      wbsPlannedRate(t, reportDate).toFixed(1), numOr0(t.actualRate), numOr0(t.weight), t.assignee||''];
+  }
+  function rowToWbsTask(row){
+    return {id:uid('wbs'), domain:cellStr(row[0]), activity:cellStr(row[1]), name:cellStr(row[2]),
+      startDate:cellStr(row[3]), endDate:cellStr(row[4]), actualRate:cellNum(row[6]), weight:cellNum(row[7]), assignee:cellStr(row[8])};
+  }
+  function employeeToRow(e){
+    return [e.name, e.dept, e.position, e.jobType, e.alwaysNonBillable?'Y':'N', e.unitPrice,
+      e.sgaType, (e.sgaRate!==''&&e.sgaRate!=null?e.sgaRate:''), e.sgaFixedAmount||0, e.salary,
+      e.systemRole, e.email, e.phone, e.hireDate, e.active?'Y':'N', (e.skills||[]).join(',')];
+  }
+  function rowToEmployeeFields(row){
+    return {
+      name:cellStr(row[0]), dept:cellStr(row[1]), position:cellStr(row[2]), jobType:cellStr(row[3])||'개발',
+      alwaysNonBillable: cellStr(row[4]).toUpperCase()==='Y',
+      unitPrice: cellNum(row[5]),
+      sgaType: cellStr(row[6])==='fixed'?'fixed':'percent',
+      sgaRate: cellStr(row[7])===''? '' : cellNum(row[7]),
+      sgaFixedAmount: cellNum(row[8]),
+      salary: cellNum(row[9]),
+      systemRole: ['admin','pm','member'].indexOf(cellStr(row[10]))!==-1? cellStr(row[10]) : 'member',
+      email: cellStr(row[11]), phone: cellStr(row[12]), hireDate: cellStr(row[13]),
+      active: cellStr(row[14]).toUpperCase()!=='N',
+      skills: cellStr(row[15])? cellStr(row[15]).split(',').map(function(s){return s.trim();}).filter(function(s){return s;}) : [],
+      resume:null
+    };
+  }
+  function assignmentToRow(a){
+    var emp = employee(a.employeeId);
+    return [emp?emp.name:'', a.ratio, a.role];
+  }
+  function rowToAssignmentFields(row){
+    return {employeeName:cellStr(row[0]), ratio:cellNum(row[1])||100, role:cellStr(row[2])||'개발'};
+  }
+  function rndItemToRow(it){ return [it.category, it.fundSource, it.description||'', it.amount]; }
+  function rowToRndItemFields(row){
+    var fs = cellStr(row[1]);
+    if(['gov','cashSelf','inkindSelf'].indexOf(fs)===-1) fs='gov';
+    return {category:cellStr(row[0]), fundSource:fs, description:cellStr(row[2]), amount:cellNum(row[3])};
+  }
+  function partnerToRow(x){
+    return [x.name, x.bizNo||'', x.field||'', (x.salesContact&&x.salesContact.name)||'', (x.salesContact&&x.salesContact.phone)||'',
+      (x.salesContact&&x.salesContact.email)||'', (x.pmContact&&x.pmContact.name)||'', (x.pmContact&&x.pmContact.phone)||'', (x.pmContact&&x.pmContact.email)||''];
+  }
+  function rowToPartnerFields(row){
+    return {name:cellStr(row[0]), bizNo:cellStr(row[1]), field:cellStr(row[2]),
+      salesContact:{name:cellStr(row[3]), phone:cellStr(row[4]), email:cellStr(row[5])},
+      pmContact:{name:cellStr(row[6]), phone:cellStr(row[7]), email:cellStr(row[8])}};
+  }
+  function freelancerToRow(x){ return [x.name, x.field||'', x.unitPrice||0, x.phone||'', x.email||'']; }
+  function rowToFreelancerFields(row){ return {name:cellStr(row[0]), field:cellStr(row[1]), unitPrice:cellNum(row[2]), phone:cellStr(row[3]), email:cellStr(row[4])}; }
+  function contractToRow(c){
+    var pt = partner(c.partnerId);
+    return [pt?pt.name:'', c.name, c.startDate||'', c.endDate||'', c.amount, c.description||'', (c.files||[]).length];
+  }
+  function clientToRow(c){ return [c.name, c.bizNo||'']; }
+  function rowToClientFields(row){ return {name:cellStr(row[0]), bizNo:cellStr(row[1])}; }
+
   function requireFields(fd, specs){
     for(var i=0;i<specs.length;i++){
       var v = fd.get(specs[i].name);
@@ -1499,7 +1607,14 @@
             (editing?'<button class="btn ghost" type="button" data-action="cancel-edit-employee">취소</button>':'')+
           '</div></form></div>'+
 
-      '<div class="panel"><h2>내부 인력 목록</h2><p class="sub">프로젝트 상세 화면에서 인력을 선택해 투입비율을 입력하면 자동으로 원가가 계산됩니다.</p>'+
+      '<div class="panel"><h2>내부 인력 목록</h2><p class="sub">프로젝트 상세 화면에서 인력을 선택해 투입비율을 입력하면 자동으로 원가가 계산됩니다. 엑셀로 다운받아 여러 명을 한 번에 채운 뒤 업로드하면 일괄 등록/갱신됩니다(이름이 같으면 정보가 갱신되고, 새 이름이면 신규 등록됩니다).</p>'+
+        (isViewerAdmin()? (
+          '<div class="btnrow" style="margin-bottom:12px">'+
+            '<button class="btn ghost" type="button" data-action="export-employees">엑셀 다운로드</button>'+
+            '<input type="file" accept=".xlsx,.xls" data-employee-file-input>'+
+            '<button class="btn ghost" type="button" data-action="import-employees">엑셀 업로드(추가/갱신)</button>'+
+          '</div>'
+        ) : '')+
         '<div class="twrap"><table><thead><tr><th>이름</th><th>부서</th><th>직급</th><th>직무</th><th class="right">월 단가</th><th class="right">판관비율</th><th class="right">연봉</th><th>기술스택</th><th>이력서</th><th>권한</th><th class="center">투입 프로젝트</th><th>상태</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '</div>'
     );
@@ -1554,7 +1669,13 @@
           '<div class="btnrow" style="grid-column:1/-1"><button class="btn primary" type="submit">'+(editing?'수정 저장':'고객사 등록')+'</button>'+
             (editing?'<button class="btn ghost" type="button" data-action="cancel-edit-client">취소</button>':'')+
           '</div></form></div>'+
-      '<div class="panel"><h2>고객사 목록</h2><p class="sub">행을 클릭하면 담당자 이력과 진행 프로젝트를 볼 수 있습니다.</p><div class="twrap"><table><thead><tr><th>고객사명</th><th>사업자번호</th><th>현재 담당자</th><th class="center">진행 프로젝트</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+      '<div class="panel"><h2>고객사 목록</h2><p class="sub">행을 클릭하면 담당자 이력과 진행 프로젝트를 볼 수 있습니다. 엑셀로 여러 고객사를 한 번에 등록/갱신할 수 있습니다(이름이 같으면 갱신, 새 이름이면 신규 등록).</p>'+
+        '<div class="btnrow" style="margin-bottom:12px">'+
+          '<button class="btn ghost" type="button" data-action="export-clients">엑셀 다운로드</button>'+
+          '<input type="file" accept=".xlsx,.xls" data-client-file-input>'+
+          '<button class="btn ghost" type="button" data-action="import-clients">엑셀 업로드(추가/갱신)</button>'+
+        '</div>'+
+        '<div class="twrap"><table><thead><tr><th>고객사명</th><th>사업자번호</th><th>현재 담당자</th><th class="center">진행 프로젝트</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
     );
   }
 
@@ -1706,7 +1827,12 @@
           '<div class="btnrow" style="grid-column:1/-1"><button class="btn primary" type="submit">'+(editing?'수정 저장':title+' 등록')+'</button>'+
             (editing?'<button class="btn ghost" type="button" data-action="cancel-edit-'+kind+'">취소</button>':'')+
           '</div></form></div>'+
-      '<div class="panel"><h2>'+title+' 목록 &middot; 누적 매출</h2><p class="sub">행을 클릭하면 담당자 상세'+(isPartner?'·보유 솔루션':'')+'와 과거 참여 프로젝트(기간·금액)를 볼 수 있습니다. "누적 매출"은 프로젝트에서 입력한 비용의 합계입니다.</p>'+
+      '<div class="panel"><h2>'+title+' 목록 &middot; 누적 매출</h2><p class="sub">행을 클릭하면 담당자 상세'+(isPartner?'·보유 솔루션':'')+'와 과거 참여 프로젝트(기간·금액)를 볼 수 있습니다. "누적 매출"은 프로젝트에서 입력한 비용의 합계입니다. 엑셀로 여러 '+title+'를 한 번에 등록/갱신할 수 있습니다(이름이 같으면 갱신, 새 이름이면 신규 등록).</p>'+
+        '<div class="btnrow" style="margin-bottom:12px">'+
+          '<button class="btn ghost" type="button" data-action="export-'+kind+'s">엑셀 다운로드</button>'+
+          '<input type="file" accept=".xlsx,.xls" data-'+kind+'-file-input>'+
+          '<button class="btn ghost" type="button" data-action="import-'+kind+'s">엑셀 업로드(추가/갱신)</button>'+
+        '</div>'+
         '<div class="twrap"><table><thead><tr><th>'+(isPartner?'업체명':'이름')+'</th>'+
           (isPartner? '<th>사업자번호</th>' : '')+
           '<th>분야</th><th>'+(isPartner?'담당자':'이메일')+'</th>'+
@@ -1947,7 +2073,12 @@
       '</form>'+
 
       '<h3 style="font-size:13px;margin:16px 0 6px">기타 비목 추가</h3>'+
-      '<p class="sub">학생인건비·연구시설장비비·연구재료비·연구활동비(회의비·국내외출장비 등)·연구과제추진비·위탁연구개발비·간접비 등 인건비 외 비목을 재원구분별로 입력합니다.</p>'+
+      '<p class="sub">학생인건비·연구시설장비비·연구재료비·연구활동비(회의비·국내외출장비 등)·연구과제추진비·위탁연구개발비·간접비 등 인건비 외 비목을 재원구분별로 입력합니다. 엑셀로 비목 목록 전체를 한 번에 다운로드/업로드할 수 있습니다(다운로드한 파일은 정부 R&D 예산총괄표 제출 자료로도 활용 가능).</p>'+
+      '<div class="btnrow" style="margin-bottom:12px">'+
+        '<button class="btn ghost" type="button" data-action="export-rnd-items">엑셀 다운로드</button>'+
+        '<input type="file" accept=".xlsx,.xls" data-rnd-file-input>'+
+        '<button class="btn ghost" type="button" data-action="import-rnd-items">엑셀 업로드(전체 교체)</button>'+
+      '</div>'+
       '<form class="grid cols-4" data-form="rndBudgetItemForm">'+
         '<input type="hidden" name="proposalId" value="'+pp.id+'">'+
         '<div class="field"><label>비목</label><select name="category" required>'+nonLaborCategoryOpts+'</select></div>'+
@@ -2317,7 +2448,12 @@
         '<td class="right"><button class="iconbtn" data-action="remove-assignment" data-id="'+a.id+'">삭제</button></td></tr>';
     }).join('') || '<tr class="empty-row"><td colspan="7">투입된 내부 인력이 없습니다.</td></tr>';
 
-    return '<div class="panel"><h2>투입 인력(내부) 등록</h2><p class="sub">인력·업무역할(PM/PL 등)을 선택하고 투입비율(%)을 입력하면 원가가 자동 계산됩니다. 판관비는 출력 &gt; 원가요약에서 함께 표시됩니다.</p>'+
+    return '<div class="panel"><h2>투입 인력(내부) 등록</h2><p class="sub">인력·업무역할(PM/PL 등)을 선택하고 투입비율(%)을 입력하면 원가가 자동 계산됩니다. 판관비는 출력 &gt; 원가요약에서 함께 표시됩니다. 엑셀로 다운받아 여러 명의 참여율을 한 번에 채운 뒤 업로드하면 전체가 반영되며, 다운로드한 파일은 인력투입계획서 제출 자료로도 쓸 수 있습니다.</p>'+
+      '<div class="btnrow" style="margin-bottom:12px">'+
+        '<button class="btn ghost" type="button" data-action="export-assignments">엑셀 다운로드</button>'+
+        '<input type="file" accept=".xlsx,.xls" data-assignment-file-input>'+
+        '<button class="btn ghost" type="button" data-action="import-assignments">엑셀 업로드(전체 교체)</button>'+
+      '</div>'+
       '<form class="inline-add wide" data-form="assignmentForm">'+
         '<div class="field"><label>인력 선택</label><select name="employeeId" required><option value="">선택</option>'+employeeOptions+'</select></div>'+
         '<div class="field"><label>업무 역할</label><select name="role">'+roleOptions+'</select></div>'+
@@ -2404,7 +2540,8 @@
     }).join('') || '<tr class="empty-row"><td colspan="7">등록된 계약이 없습니다.</td></tr>';
     var totalAmount = (p.contracts||[]).reduce(function(a,c){return a+numOr0(c.amount);},0);
 
-    return '<div class="panel"><h2>협력업체 계약관리</h2><p class="sub">협력업체를 선택하고 계약명·기간·금액·내용을 입력한 뒤, 계약서·견적서·기타 파일(비교견적 등)을 첨부합니다. 등록한 계약은 협력업체 관리 화면에서도 업체별로 모아볼 수 있습니다.</p>'+
+    return '<div class="panel"><h2>협력업체 계약관리</h2><p class="sub">협력업체를 선택하고 계약명·기간·금액·내용을 입력한 뒤, 계약서·견적서·기타 파일(비교견적 등)을 첨부합니다. 등록한 계약은 협력업체 관리 화면에서도 업체별로 모아볼 수 있습니다. 엑셀로 내려받아 계약 현황 보고 자료로 제출할 수 있습니다.</p>'+
+      '<div class="btnrow" style="margin-bottom:12px"><button class="btn ghost" type="button" data-action="export-contracts">엑셀 다운로드(계약 현황)</button></div>'+
       '<form data-form="contractForm" class="grid cols-4">'+
         '<div class="field"><label>협력업체 <span class="req">*</span></label><select name="partnerId" required><option value="">선택</option>'+partnerOpts+'</select></div>'+
         '<div class="field" style="grid-column:span 2"><label>계약명 <span class="req">*</span></label><input name="name" required></div>'+
@@ -2454,7 +2591,12 @@
     }).join('') || '<p class="sub">등록된 WBS 작업이 없습니다. 아래 양식으로 Domain·Activity·Task를 추가하세요.</p>';
 
     return '<div class="panel"><h2>WBS(작업분류체계) &middot; 진행현황</h2>'+
-      '<p class="sub">Domain · Activity · Task 단위로 일정과 가중치를 등록하면, 기준일 대비 계획 진도율과 실제 진도율을 비교해 공정율(실적÷계획)을 계산합니다.</p>'+
+      '<p class="sub">Domain · Activity · Task 단위로 일정과 가중치를 등록하면, 기준일 대비 계획 진도율과 실제 진도율을 비교해 공정율(실적÷계획)을 계산합니다. 엑셀로 다운받아 여러 건을 한 번에 채운 뒤 업로드하면 전체가 반영되며, 다운로드한 파일은 그대로 월간보고 제출 자료로 쓸 수 있습니다.</p>'+
+      '<div class="btnrow" style="margin-bottom:12px">'+
+        '<button class="btn ghost" type="button" data-action="export-wbs">엑셀 다운로드</button>'+
+        '<input type="file" accept=".xlsx,.xls" data-wbs-file-input>'+
+        '<button class="btn ghost" type="button" data-action="import-wbs">엑셀 업로드(전체 교체)</button>'+
+      '</div>'+
       '<div class="grid cols-4" style="margin-bottom:14px">'+
         '<div class="field"><label>기준일</label><input type="date" data-wbs-reportdate value="'+esc(reportDate)+'"></div>'+
         '<div class="kpi"><div class="k">전체 계획율</div><div class="v num">'+overall.plan.toFixed(1)+'%</div></div>'+
@@ -2875,7 +3017,7 @@
           applyRfpAnalysisResult(pp, r.json.result);
           save(); render();
           showToast('RFP 분석 결과가 반영되었습니다. 내용을 확인 후 필요 시 수정하세요.');
-        }).catch(function(err){
+})['catch'](function(err){
           S.ui.rfpAnalyzing = false; render();
           showToast('분석 요청 중 오류: '+(err&&err.message?err.message:err)+' (API 주소/CORS/네트워크를 확인하세요)', 'warn');
         });
@@ -2928,6 +3070,153 @@
       var p=project(S.ui.currentProjectId); if(!p) return;
       p.wbs.tasks = (p.wbs.tasks||[]).filter(function(t){return t.id!==btn.dataset.id;});
       save(); render();
+    },
+
+    // ---- 엑셀 다운로드/업로드 (1순위: WBS·인력, 2순위: 인력투입·연구과제예산, 3순위: 협력업체·프리랜서·계약·고객사) ----
+    'export-wbs': function(){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      var rows = (p.wbs.tasks||[]).map(function(t){ return wbsTaskToRow(t, p.wbs.reportDate); });
+      exportSheet('WBS_'+p.code+'.xlsx', 'WBS', ['Domain','Activity','Task','시작일','종료일','계획완료율(%)','실제완료율(%)','가중치(%)','담당'], rows);
+    },
+    'import-wbs': function(){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      importSheetFile(document.querySelector('[data-wbs-file-input]'), function(dataRows){
+        var tasks = dataRows.map(rowToWbsTask);
+        askConfirm('업로드한 엑셀 내용으로 이 프로젝트의 WBS 작업 목록 전체를 교체합니다('+tasks.length+'건). 계속할까요?', 'import-wbs-confirmed', {tasks:tasks});
+      });
+    },
+    'import-wbs-confirmed': function(btn){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      p.wbs.tasks = btn.dataset.tasks;
+      save(); render();
+      showToast('WBS 작업 '+p.wbs.tasks.length+'건이 엑셀에서 반영되었습니다.');
+    },
+    'export-employees': function(){
+      var rows = S.employees.map(employeeToRow);
+      exportSheet('직원목록.xlsx', '직원', ['이름','부서','직급','직무','상시비가동(Y/N)','월단가','판관비방식(percent/fixed)','판관비율(%)','판관비정액','연봉','권한(admin/pm/member)','이메일','연락처','입사일','재직여부(Y/N)','기술스택(콤마구분)'], rows);
+    },
+    'import-employees': function(){
+      importSheetFile(document.querySelector('[data-employee-file-input]'), function(dataRows){
+        var added=0, updated=0;
+        dataRows.forEach(function(row){
+          var fields = rowToEmployeeFields(row);
+          if(!fields.name) return;
+          var existing = S.employees.filter(function(e){return e.name===fields.name;})[0];
+          if(existing){ Object.assign(existing, fields); updated++; }
+          else { fields.id = uid('emp'); S.employees.push(fields); added++; }
+        });
+        save(); render();
+        showToast('엑셀에서 직원 '+added+'명 추가, '+updated+'명 갱신되었습니다.');
+      });
+    },
+    'export-assignments': function(){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      var rows = (p.assignments||[]).map(assignmentToRow);
+      exportSheet('인력투입_'+p.code+'.xlsx', '인력투입', ['이름','참여율(%)','역할'], rows);
+    },
+    'import-assignments': function(){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      importSheetFile(document.querySelector('[data-assignment-file-input]'), function(dataRows){
+        var resolved=[], unmatched=0;
+        dataRows.forEach(function(row){
+          var f = rowToAssignmentFields(row);
+          var emp = S.employees.filter(function(e){return e.name===f.employeeName;})[0];
+          if(!emp){ unmatched++; return; }
+          resolved.push({id:uid('as'), employeeId:emp.id, ratio:Math.max(1,Math.min(100,f.ratio)), role:f.role});
+        });
+        askConfirm('업로드한 엑셀 내용으로 이 프로젝트의 인력투입 목록 전체를 교체합니다('+resolved.length+'건 반영'+(unmatched? ', 이름이 일치하지 않는 '+unmatched+'건 제외':'')+'). 계속할까요?', 'import-assignments-confirmed', {assignments:resolved});
+      });
+    },
+    'import-assignments-confirmed': function(btn){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      p.assignments = btn.dataset.assignments;
+      save(); render();
+      showToast('인력투입 '+p.assignments.length+'건이 엑셀에서 반영되었습니다.');
+    },
+    'export-rnd-items': function(){
+      var pp = proposal(S.ui.currentProposalId); if(!pp) return;
+      var rows = (pp.rndBudget.items||[]).map(rndItemToRow);
+      exportSheet('연구과제예산_'+pp.code+'.xlsx', '예산편성', ['비목','재원구분(gov/cashSelf/inkindSelf)','내용','금액'], rows);
+    },
+    'import-rnd-items': function(){
+      var pp = proposal(S.ui.currentProposalId); if(!pp) return;
+      importSheetFile(document.querySelector('[data-rnd-file-input]'), function(dataRows){
+        var items = dataRows.map(function(row){
+          var f = rowToRndItemFields(row);
+          return {id:uid('rb'), category:f.category, fundSource:f.fundSource, description:f.description, amount:f.amount};
+        });
+        askConfirm('업로드한 엑셀 내용으로 이 제안의 비목편성 목록 전체를 교체합니다('+items.length+'건). 계속할까요?', 'import-rnd-items-confirmed', {items:items});
+      });
+    },
+    'import-rnd-items-confirmed': function(btn){
+      var pp = proposal(S.ui.currentProposalId); if(!pp) return;
+      pp.rndBudget.items = btn.dataset.items;
+      save(); render();
+      showToast('비목편성 '+pp.rndBudget.items.length+'건이 엑셀에서 반영되었습니다.');
+    },
+    'export-partners': function(){
+      var rows = S.partners.map(partnerToRow);
+      exportSheet('협력업체목록.xlsx', '협력업체', ['업체명','사업자번호','전문분야','영업담당이름','영업담당연락처','영업담당이메일','PM이름','PM연락처','PM이메일'], rows);
+    },
+    'import-partners': function(){
+      importSheetFile(document.querySelector('[data-partner-file-input]'), function(dataRows){
+        var added=0, updated=0;
+        dataRows.forEach(function(row){
+          var f = rowToPartnerFields(row);
+          if(!f.name) return;
+          var existing = S.partners.filter(function(x){return x.name===f.name;})[0];
+          if(existing){ Object.assign(existing, f); updated++; }
+          else { f.id=uid('ptn'); f.solutions=[]; S.partners.push(f); added++; }
+        });
+        save(); render();
+        showToast('엑셀에서 협력업체 '+added+'개 추가, '+updated+'개 갱신되었습니다.');
+      });
+    },
+    'export-freelancers': function(){
+      var rows = S.freelancers.map(freelancerToRow);
+      exportSheet('프리랜서목록.xlsx', '프리랜서', ['이름','전문분야','기본단가','연락처','이메일'], rows);
+    },
+    'import-freelancers': function(){
+      importSheetFile(document.querySelector('[data-freelancer-file-input]'), function(dataRows){
+        var added=0, updated=0;
+        dataRows.forEach(function(row){
+          var f = rowToFreelancerFields(row);
+          if(!f.name) return;
+          var existing = S.freelancers.filter(function(x){return x.name===f.name;})[0];
+          if(existing){
+            if(existing.unitPrice!==f.unitPrice){
+              existing.rateHistory = existing.rateHistory||[];
+              existing.rateHistory.push({id:uid('rh'), date:new Date().toISOString().slice(0,10), oldRate:existing.unitPrice, newRate:f.unitPrice});
+            }
+            Object.assign(existing, f); updated++;
+          } else { f.id=uid('frl'); f.rateHistory=[]; S.freelancers.push(f); added++; }
+        });
+        save(); render();
+        showToast('엑셀에서 프리랜서 '+added+'명 추가, '+updated+'명 갱신되었습니다.');
+      });
+    },
+    'export-contracts': function(){
+      var p = project(S.ui.currentProjectId); if(!p) return;
+      var rows = (p.contracts||[]).map(contractToRow);
+      exportSheet('계약현황_'+p.code+'.xlsx', '계약현황', ['협력업체','계약명','시작일','종료일','계약금액','내용','첨부파일수'], rows);
+    },
+    'export-clients': function(){
+      var rows = S.clients.map(clientToRow);
+      exportSheet('고객사목록.xlsx', '고객사', ['고객사명','사업자번호'], rows);
+    },
+    'import-clients': function(){
+      importSheetFile(document.querySelector('[data-client-file-input]'), function(dataRows){
+        var added=0, updated=0;
+        dataRows.forEach(function(row){
+          var f = rowToClientFields(row);
+          if(!f.name) return;
+          var existing = S.clients.filter(function(c){return c.name===f.name;})[0];
+          if(existing){ Object.assign(existing, f); updated++; }
+          else { f.id=uid('cli'); f.contacts=[]; S.clients.push(f); added++; }
+        });
+        save(); render();
+        showToast('엑셀에서 고객사 '+added+'개 추가, '+updated+'개 갱신되었습니다.');
+      });
     }
   };
 
