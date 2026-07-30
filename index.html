@@ -1,7 +1,9 @@
 <title>레몬헬스케어 공공사업 관리</title>
 <style>
-  /* "블랙" 디자인 스키마 — 근흑색(#0A0B0D) 바탕의 전문적인 다크 테마. 라이트/OS 설정과 무관하게 항상 이 톤을 사용합니다. */
-  :root{
+  /* 사이트 디자인 테마 4종 — 전체 관리에서 선택하면 JS가 <html data-theme="..."> 를 갱신합니다.
+     의미색(success/warn/crit/info)은 테마와 무관하게 역할이 고정되고, 테마별로 미세 조정만 됩니다.
+     기본값(속성 미지정 시)은 블랙입니다. */
+  :root, :root[data-theme="black"]{
     --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
     --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
     --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
@@ -11,35 +13,35 @@
     --crit:#F2776D; --crit-soft:#391B18;
     --violet:#B49AF0; --violet-soft:#291F3E;
   }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
-      --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
-      --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
-      --info:#6FA8F5; --info-soft:#16233A;
-      --success:#4ADE94; --success-soft:#133326;
-      --warn:#F5B94D; --warn-soft:#362A12;
-      --crit:#F2776D; --crit-soft:#391B18;
-      --violet:#B49AF0; --violet-soft:#291F3E;
-    }
-  }
-  :root[data-theme="dark"]{
-    --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
-    --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
-    --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
+  :root[data-theme="red"]{
+    --ink:#F0E9E9; --paper:#100A0A; --panel:#1C1213; --line:#332224; --muted:#9C8A8B;
+    --teal:#C23B4E; --teal-soft:#3A1418; --teal-ink:#F0929E;
+    --lemon:#E8A23C; --lemon-soft:#332210; --lemon-ink:#F2C077;
     --info:#6FA8F5; --info-soft:#16233A;
-    --success:#4ADE94; --success-soft:#133326; --warn:#F5B94D; --warn-soft:#362A12;
-    --crit:#F2776D; --crit-soft:#391B18;
+    --success:#4ADE94; --success-soft:#133326;
+    --warn:#F5B94D; --warn-soft:#362A12;
+    --crit:#FF5C5C; --crit-soft:#3D1414;
     --violet:#B49AF0; --violet-soft:#291F3E;
   }
-  :root[data-theme="light"]{
-    --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
-    --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
+  :root[data-theme="white"]{
+    --ink:#1A1D21; --paper:#FFFFFF; --panel:#F7F8FA; --line:#E2E5E9; --muted:#6B7280;
+    --teal:#0D9488; --teal-soft:#E6F6F4; --teal-ink:#0B6B62;
+    --lemon:#A8B400; --lemon-soft:#F4F7D6; --lemon-ink:#5C6300;
+    --info:#2563EB; --info-soft:#E8EFFD;
+    --success:#16A34A; --success-soft:#E7F7ED;
+    --warn:#D97706; --warn-soft:#FCF1DE;
+    --crit:#DC2626; --crit-soft:#FCE8E8;
+    --violet:#7C3AED; --violet-soft:#F0E9FD;
+  }
+  :root[data-theme="navy"]{
+    --ink:#E5EBF5; --paper:#0A0E17; --panel:#141A26; --line:#232B3D; --muted:#8A94AC;
+    --teal:#3B82F6; --teal-soft:#132038; --teal-ink:#93BBFB;
     --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
-    --info:#6FA8F5; --info-soft:#16233A;
-    --success:#4ADE94; --success-soft:#133326; --warn:#F5B94D; --warn-soft:#362A12;
-    --crit:#F2776D; --crit-soft:#391B18;
-    --violet:#B49AF0; --violet-soft:#291F3E;
+    --info:#38BDF8; --info-soft:#0F2333;
+    --success:#34D399; --success-soft:#0F2B22;
+    --warn:#FBBF24; --warn-soft:#332710;
+    --crit:#F87171; --crit-soft:#341717;
+    --violet:#A78BFA; --violet-soft:#241C3D;
   }
 
   *{box-sizing:border-box;}
@@ -514,6 +516,13 @@
   var BIZ_TYPE_OPTIONS = [{code:'SI', label:'SI(구축)'},{code:'SM', label:'SM(유지보수)'},{code:'RND', label:'과제(연구과제)'}];
   var BIZ_TYPE_LABEL = {SI:'SI(구축)', SM:'SM(유지보수)', RND:'과제(연구과제)'};
   var BIZ_TYPE_CLS = {SI:'info', SM:'warn', RND:'violet'};
+  // 사이트 디자인 테마 프리셋 — 전체 관리 화면의 선택 UI에 미리보기 스와치를 그리는 용도
+  var THEME_PRESETS = [
+    {key:'black', label:'블랙', paper:'#0A0B0D', panel:'#15171B', accent:'#3FBFAE'},
+    {key:'red', label:'레드', paper:'#100A0A', panel:'#1C1213', accent:'#C23B4E'},
+    {key:'white', label:'화이트', paper:'#FFFFFF', panel:'#F7F8FA', accent:'#0D9488'},
+    {key:'navy', label:'네이비', paper:'#0A0E17', panel:'#141A26', accent:'#3B82F6'}
+  ];
 
   // ---- 연구과제(RND) 예산계획 ----
   // 국가연구개발혁신법 체계상 연구개발비는 "정부출연금"과 "민간부담금(자부담: 현금+현물)"으로 구성됩니다.
@@ -599,6 +608,7 @@
     if(!S.settings.siteTitle) S.settings.siteTitle='레몬헬스케어';
     if(!S.settings.siteSubtitle) S.settings.siteSubtitle='공공사업 관리';
     if(S.settings.rfpAnalysisEndpoint===undefined) S.settings.rfpAnalysisEndpoint='';
+    if(!S.settings.theme) S.settings.theme='black';
     S.ui = S.ui || {};
     if(!S.ui.revMtxMode) S.ui.revMtxMode='rolling';
     if(!S.ui.laborMtxMode) S.ui.laborMtxMode='rolling';
@@ -655,6 +665,10 @@
       p.assignments = p.assignments || [];
       p.milestones = p.milestones || emptyMilestones();
       p.contracts = p.contracts || [];
+      if(!p.wbs) p.wbs = {reportDate:new Date().toISOString().slice(0,10), tasks:[]};
+      if(!p.wbs.tasks) p.wbs.tasks=[];
+      if(!p.wbs.reportDate) p.wbs.reportDate=new Date().toISOString().slice(0,10);
+      p.wbs.tasks.forEach(function(t){ if(t.weight==null) t.weight=0; if(t.actualRate==null) t.actualRate=0; });
       p.assignments.forEach(function(a){ if(!a.role) a.role='개발'; });
       if(p.proposalId===undefined) p.proposalId=null;
       if(p.proposalCost==null) p.proposalCost=0;
@@ -1401,6 +1415,21 @@
         '</form>'+
       '</div>'+
 
+      '<div class="panel"><h2>사이트 디자인 테마</h2><p class="sub">테마를 선택하면 사이트 전체 배색이 즉시 바뀝니다(브라우저에 저장되어 다음 접속에도 유지됩니다).</p>'+
+        '<form data-form="themeForm" class="grid cols-4">'+
+          THEME_PRESETS.map(function(t){
+            var checked = (S.settings.theme||'black')===t.key;
+            return '<label style="display:flex;flex-direction:column;gap:8px;padding:12px;border:2px solid '+(checked?'var(--teal)':'var(--line)')+';border-radius:10px;cursor:pointer;background:var(--panel)">'+
+              '<span style="display:flex;gap:6px;align-items:center"><input type="radio" name="theme" value="'+t.key+'" style="width:auto"'+(checked?' checked':'')+'><b style="font-size:13px">'+t.label+'</b></span>'+
+              '<span style="display:flex;height:28px;border-radius:6px;overflow:hidden;border:1px solid var(--line)">'+
+                '<span style="flex:2;background:'+t.paper+'"></span><span style="flex:1;background:'+t.panel+'"></span><span style="flex:1;background:'+t.accent+'"></span>'+
+              '</span>'+
+            '</label>';
+          }).join('')+
+          '<div class="btnrow" style="grid-column:1/-1"><button class="btn primary" type="submit">테마 적용</button></div>'+
+        '</form>'+
+      '</div>'+
+
       '<div class="panel"><h2>RFP 자동분석 연동</h2><p class="sub">제안관리에서 RFP PDF를 업로드하면 AI가 사업명·마감일·요구사항·필요 첨부서류를 추출해주는 기능입니다. 별도로 배포한 백엔드(예: Cloudflare Worker)의 주소를 입력하세요. claude.ai 아티팩트 미리보기 링크에서는 보안정책(CSP)상 동작하지 않으며, 이 HTML 파일을 로컬에서 열거나 별도 호스팅했을 때만 동작합니다.</p>'+
         '<form data-form="rfpEndpointForm" class="grid cols-4">'+
           '<div class="field" style="grid-column:span 3"><label>RFP 분석 API 주소</label><input name="rfpAnalysisEndpoint" placeholder="https://your-worker.your-subdomain.workers.dev" value="'+esc(S.settings.rfpAnalysisEndpoint||'')+'"></div>'+
@@ -1546,6 +1575,44 @@
       });
     });
     return rows;
+  }
+
+  // ---- WBS(작업분류체계) ----
+  function daysBetweenInclusive(startStr, endStr){
+    if(!startStr || !endStr) return 0;
+    var s = new Date(startStr), e = new Date(endStr);
+    var diff = Math.round((e-s)/86400000)+1;
+    return Math.max(0, diff);
+  }
+  // 기준일이 작업기간 중 어디쯤인지로 "계획대로라면 지금 몇 % 진행되어 있어야 하는가"를 산출
+  function wbsPlannedRate(task, reportDate){
+    if(!task.startDate || !task.endDate) return 0;
+    var s = new Date(task.startDate), e = new Date(task.endDate), r = new Date(reportDate);
+    if(e<=s) return 0;
+    if(r<=s) return 0;
+    if(r>=e) return 100;
+    return (r-s)/(e-s)*100;
+  }
+  function wbsDomainGroups(p){
+    var order=[], map={};
+    (p.wbs.tasks||[]).forEach(function(t){
+      if(!map[t.domain]){ map[t.domain]={name:t.domain, tasks:[]}; order.push(t.domain); }
+      map[t.domain].tasks.push(t);
+    });
+    return order.map(function(k){ return map[k]; });
+  }
+  // 가중치를 반영한 계획율/실적율/공정율(실적÷계획) 가중평균
+  function wbsRollup(tasks, reportDate){
+    var planSum=0, actSum=0, wSum=0;
+    tasks.forEach(function(t){
+      var w = numOr0(t.weight);
+      planSum += wbsPlannedRate(t, reportDate)*w;
+      actSum += numOr0(t.actualRate)*w;
+      wSum += w;
+    });
+    var plan = wSum? planSum/wSum : 0;
+    var act = wSum? actSum/wSum : 0;
+    return {plan:plan, act:act, progress: plan? (act/plan*100) : 0};
   }
 
   function renderExternalRegistry(kind){
@@ -2356,6 +2423,59 @@
     '</div>';
   }
 
+  function inWBS(p){
+    p.wbs = p.wbs || {reportDate:new Date().toISOString().slice(0,10), tasks:[]};
+    var reportDate = p.wbs.reportDate;
+    var groups = wbsDomainGroups(p);
+    var overall = wbsRollup(p.wbs.tasks||[], reportDate);
+    var domainListOpts = groups.map(function(g){ return '<option value="'+esc(g.name)+'">'; }).join('');
+
+    var groupsHtml = groups.map(function(g){
+      var roll = wbsRollup(g.tasks, reportDate);
+      var rowsHtml = g.tasks.map(function(t){
+        var workDays = daysBetweenInclusive(t.startDate, t.endDate);
+        var plan = wbsPlannedRate(t, reportDate);
+        var act = numOr0(t.actualRate);
+        var variance = act-plan;
+        var actualDays = Math.round(workDays*act/100);
+        return '<tr><td>'+esc(t.activity)+'</td><td>'+esc(t.name)+'</td>'+
+          '<td class="num">'+esc(t.startDate||'-')+' ~ '+esc(t.endDate||'-')+'</td>'+
+          '<td class="right num">'+workDays+'</td>'+
+          '<td class="right num">'+plan.toFixed(1)+'%</td>'+
+          '<td class="right num"><input class="num" type="number" step="0.1" min="0" max="100" data-wbs-actual="'+t.id+'" value="'+act+'" style="width:64px;text-align:right">%</td>'+
+          '<td class="right num" style="color:'+(variance>=0?'var(--success)':'var(--crit)')+'">'+(variance>=0?'+':'')+variance.toFixed(1)+'</td>'+
+          '<td class="right num">'+actualDays+'</td>'+
+          '<td class="right num">'+t.weight+'%</td>'+
+          '<td>'+esc(t.assignee||'-')+'</td>'+
+          '<td class="right"><button class="iconbtn" data-action="remove-wbs-task" data-id="'+t.id+'">삭제</button></td></tr>';
+      }).join('');
+      return '<h3 style="font-size:13px;margin:16px 0 6px">'+esc(g.name)+' <span class="sub" style="font-weight:400">— 계획 '+roll.plan.toFixed(1)+'% · 실적 '+roll.act.toFixed(1)+'% · 공정율 '+roll.progress.toFixed(1)+'%</span></h3>'+
+        '<div class="twrap"><table><thead><tr><th>Activity</th><th>Task</th><th>기간</th><th class="right">작업일수</th><th class="right">계획완료율</th><th class="right">실제완료율</th><th class="right">차이</th><th class="right">실적일수</th><th class="right">가중치</th><th>담당</th><th></th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+    }).join('') || '<p class="sub">등록된 WBS 작업이 없습니다. 아래 양식으로 Domain·Activity·Task를 추가하세요.</p>';
+
+    return '<div class="panel"><h2>WBS(작업분류체계) &middot; 진행현황</h2>'+
+      '<p class="sub">Domain · Activity · Task 단위로 일정과 가중치를 등록하면, 기준일 대비 계획 진도율과 실제 진도율을 비교해 공정율(실적÷계획)을 계산합니다.</p>'+
+      '<div class="grid cols-4" style="margin-bottom:14px">'+
+        '<div class="field"><label>기준일</label><input type="date" data-wbs-reportdate value="'+esc(reportDate)+'"></div>'+
+        '<div class="kpi"><div class="k">전체 계획율</div><div class="v num">'+overall.plan.toFixed(1)+'%</div></div>'+
+        '<div class="kpi"><div class="k">전체 실적율</div><div class="v num">'+overall.act.toFixed(1)+'%</div></div>'+
+        '<div class="kpi" style="border-color:'+(overall.progress>=80?'var(--success)':overall.progress>=50?'var(--warn)':'var(--crit)')+'"><div class="k">전체 공정율</div><div class="v num" style="color:'+(overall.progress>=80?'var(--success)':overall.progress>=50?'var(--warn)':'var(--crit)')+'">'+overall.progress.toFixed(1)+'%</div></div>'+
+      '</div>'+
+      '<form data-form="wbsTaskForm" class="grid cols-4">'+
+        '<div class="field"><label>Domain <span class="req">*</span></label><input name="domain" required placeholder="예: A. 과제관리" list="wbsDomainList"></div>'+
+        '<div class="field"><label>Activity <span class="req">*</span></label><input name="activity" required placeholder="예: 과제 수행 관리"></div>'+
+        '<div class="field" style="grid-column:span 2"><label>Task <span class="req">*</span></label><input name="name" required placeholder="예: PMO 주간회의"></div>'+
+        '<div class="field"><label>시작일</label><input type="date" name="startDate"></div>'+
+        '<div class="field"><label>종료일</label><input type="date" name="endDate"></div>'+
+        '<div class="field"><label>가중치(%)</label><input class="num" type="number" step="0.1" name="weight" value="10"></div>'+
+        '<div class="field"><label>담당</label><input name="assignee" placeholder="이름 또는 업체명"></div>'+
+        '<div class="btnrow" style="grid-column:1/-1"><button class="btn primary" type="submit">WBS 작업 추가</button></div>'+
+      '</form>'+
+      '<datalist id="wbsDomainList">'+domainListOpts+'</datalist>'+
+      groupsHtml+
+    '</div>';
+  }
+
   // ==================================================================
   //  PROJECT DETAIL — OUTPUT sub-views (read-only)
   // ==================================================================
@@ -2471,7 +2591,7 @@
 
     var body='';
     if(mode==='input'){
-      var itabs=[{k:'basic',l:'기본정보'},{k:'labor',l:'인력투입'},{k:'outsourcing',l:'외주비용'},{k:'indirect',l:'간접비'},{k:'contracts',l:'계약관리'}];
+      var itabs=[{k:'basic',l:'기본정보'},{k:'labor',l:'인력투입'},{k:'outsourcing',l:'외주비용'},{k:'indirect',l:'간접비'},{k:'contracts',l:'계약관리'},{k:'wbs',l:'WBS/진행현황'}];
       body += '<div class="subtabs">'+itabs.map(function(t){return '<button class="'+(inputTab===t.k?'active':'')+'" data-action="set-project-tab" data-scope="input" data-tab="'+t.k+'">'+t.l+'</button>';}).join('')+'</div>';
       if(linkedPP) body += '<p class="sub" style="margin-top:-6px">입찰 일정·사전영업보고서는 <button class="linkbtn" data-action="open-proposal" data-id="'+linkedPP.id+'">제안관리 &gt; '+esc(linkedPP.code)+'</button> 에서 관리합니다.</p>';
       if(inputTab==='basic') body+=inBasic(p);
@@ -2479,6 +2599,7 @@
       else if(inputTab==='outsourcing') body+=inOutsourcing(p);
       else if(inputTab==='indirect') body+=inIndirect(p);
       else if(inputTab==='contracts') body+=inContracts(p);
+      else if(inputTab==='wbs') body+=inWBS(p);
     } else {
       var otabs=[{k:'summary',l:'원가요약'},{k:'matrix',l:'인력투입 현황'},{k:'ledger',l:'외주 내역'},{k:'indirectout',l:'간접비 내역'},{k:'revisions',l:'원가 변경이력'}];
       body += '<div class="subtabs">'+otabs.map(function(t){return '<button class="'+(outputTab===t.k?'active':'')+'" data-action="set-project-tab" data-scope="output" data-tab="'+t.k+'">'+t.l+'</button>';}).join('')+'</div>';
@@ -2503,7 +2624,11 @@
   var VIEW_TITLES = {dashboard:'통계 대시보드', proposals:'제안 관리', projects:'프로젝트 관리', sales:'영업 관리', employees:'인력 관리', partners:'협력업체 관리', freelancers:'프리랜서 관리', clients:'고객사 관리', admin:'전체 관리'};
   var NAV_ORDER = ['dashboard','proposals','projects','sales','employees','partners','freelancers','clients','admin'];
 
+  function applyTheme(){
+    try{ document.documentElement.setAttribute('data-theme', S.settings.theme||'black'); }catch(e){}
+  }
   function render(){
+    applyTheme();
     var app = document.getElementById('app');
     var html='';
     if(S.view==='intro'){
@@ -2764,7 +2889,7 @@
       var newProj = { id:uid('prj'), code:pp.code.replace(/^PP-/,''), name:pp.name, bizType:pp.bizType||'SI', clientId:pp.clientId, pmId:pp.pmCandidateId||null,
         contractAmount: pp.presales.estimatedBudget||null, customerBudget: pp.presales.estimatedBudget||null, sgaRate:'',
         startDate:'', endDate:'', proposalId:pp.id, proposalCost:costSum, consortium:{isConsortium:false, role:'주사업자', members:[]},
-        milestones: emptyMilestones(), contracts:[],
+        milestones: emptyMilestones(), contracts:[], wbs:{reportDate:new Date().toISOString().slice(0,10), tasks:[]},
         assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[
           {id:uid('rv'), date:new Date().toISOString().slice(0,10), reason:'제안 수주로 프로젝트 생성 (제안비용 '+won(costSum)+' 반영)', by:currentActorName()}
         ] };
@@ -2798,7 +2923,12 @@
       save(); render();
     },
     'remove-consortium-member': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.consortium.members=p.consortium.members.filter(function(m){return m.id!==btn.dataset.id;}); save(); render(); },
-    'remove-milestone-file': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.milestones[btn.dataset.key].file=null; save(); render(); }
+    'remove-milestone-file': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.milestones[btn.dataset.key].file=null; save(); render(); },
+    'remove-wbs-task': function(btn){
+      var p=project(S.ui.currentProjectId); if(!p) return;
+      p.wbs.tasks = (p.wbs.tasks||[]).filter(function(t){return t.id!==btn.dataset.id;});
+      save(); render();
+    }
   };
 
   var forms = {
@@ -2811,6 +2941,12 @@
     rfpEndpointForm: function(fd){
       S.settings.rfpAnalysisEndpoint = (fd.get('rfpAnalysisEndpoint')||'').trim();
       save(); render(); showToast('RFP 분석 API 주소가 저장되었습니다.');
+    },
+    themeForm: function(fd){
+      var theme = fd.get('theme');
+      if(!THEME_PRESETS.some(function(t){return t.key===theme;})) return;
+      S.settings.theme = theme;
+      save(); render(); showToast('디자인 테마가 적용되었습니다.');
     },
 
     employeeForm: function(fd){
@@ -2885,7 +3021,7 @@
         contractAmount:fd.get('contractAmount')?Number(fd.get('contractAmount')):null, customerBudget:fd.get('customerBudget')?Number(fd.get('customerBudget')):null,
         sgaRate: fd.get('sgaRate')===''?'':Number(fd.get('sgaRate')), startDate:'', endDate:'',
         proposalId:null, proposalCost:0, consortium:{isConsortium:false, role:'주사업자', members:[]},
-        milestones:emptyMilestones(), contracts:[], assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[] };
+        milestones:emptyMilestones(), contracts:[], wbs:{reportDate:new Date().toISOString().slice(0,10), tasks:[]}, assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[] };
       S.projects.push(data); save(); render();
     },
     proposalForm: function(fd){
@@ -3055,6 +3191,15 @@
       save(); render();
       showToast('계약이 등록되었습니다.');
     },
+    wbsTaskForm: function(fd){
+      var p=project(S.ui.currentProjectId); if(!p) return;
+      if(!requireFields(fd, [{name:'domain', label:'Domain'},{name:'activity', label:'Activity'},{name:'name', label:'Task'}])) return;
+      p.wbs = p.wbs || {reportDate:new Date().toISOString().slice(0,10), tasks:[]};
+      p.wbs.tasks.push({id:uid('wbs'), domain:fd.get('domain'), activity:fd.get('activity'), name:fd.get('name'),
+        startDate:fd.get('startDate'), endDate:fd.get('endDate'), actualRate:0, weight:Number(fd.get('weight'))||0, assignee:fd.get('assignee')});
+      save(); render();
+      showToast('WBS 작업이 추가되었습니다.');
+    },
     indirectForm: function(fd){
       var p=project(S.ui.currentProjectId); if(!p) return;
       var code=fd.get('categoryCode'); if(!code) return;
@@ -3212,6 +3357,17 @@
     }
 
     var p = project(S.ui.currentProjectId);
+    if(el.matches('[data-wbs-actual]') && p){
+      var wt = (p.wbs.tasks||[]).filter(function(t){return t.id===el.dataset.wbsActual;})[0];
+      if(wt){ wt.actualRate = Math.max(0, Math.min(100, Number(el.value)||0)); save(); render(); }
+      return;
+    }
+    if(el.matches('[data-wbs-reportdate]') && p){
+      p.wbs = p.wbs || {tasks:[]};
+      p.wbs.reportDate = el.value;
+      save(); render();
+      return;
+    }
     if(el.matches('[data-project-field]') && p){
       var f = el.dataset.projectField, v = el.value;
       if(f==='contractAmount'||f==='customerBudget') p[f] = (v===''?null:Number(v));
