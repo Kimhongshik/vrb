@@ -1,44 +1,45 @@
 <title>레몬헬스케어 공공사업 관리</title>
 <style>
+  /* "블랙" 디자인 스키마 — 근흑색(#0A0B0D) 바탕의 전문적인 다크 테마. 라이트/OS 설정과 무관하게 항상 이 톤을 사용합니다. */
   :root{
-    --ink:#16232a; --paper:#f4f6f4; --panel:#ffffff; --line:#dbe2df; --muted:#5c6b68;
-    --teal:#2c6e68; --teal-soft:#dcece9; --teal-ink:#184a45;
-    --lemon:#b9cc1f; --lemon-soft:#eef3cd; --lemon-ink:#5c6300;
-    --info:#3563a6; --info-soft:#e4ecf7;
-    --success:#2f7d4f; --success-soft:#e2f2e6;
-    --warn:#a9750f; --warn-soft:#faf0da;
-    --crit:#b3423a; --crit-soft:#fbe6e3;
-    --violet:#6b5b95; --violet-soft:#e8e4f2;
+    --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
+    --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
+    --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
+    --info:#6FA8F5; --info-soft:#16233A;
+    --success:#4ADE94; --success-soft:#133326;
+    --warn:#F5B94D; --warn-soft:#362A12;
+    --crit:#F2776D; --crit-soft:#391B18;
+    --violet:#B49AF0; --violet-soft:#291F3E;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --ink:#e8efed; --paper:#101817; --panel:#161f1e; --line:#2a3735; --muted:#8ea19d;
-      --teal:#4fa89f; --teal-soft:#1e3a37; --teal-ink:#a8e0d8;
-      --lemon:#d5e64f; --lemon-soft:#33380f; --lemon-ink:#e4f07a;
-      --info:#89b0e8; --info-soft:#1e2c40;
-      --success:#5cbf82; --success-soft:#1c3628;
-      --warn:#e0b45a; --warn-soft:#3a3018;
-      --crit:#e58c84; --crit-soft:#3d2320;
-      --violet:#b3a0e6; --violet-soft:#332c47;
+      --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
+      --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
+      --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
+      --info:#6FA8F5; --info-soft:#16233A;
+      --success:#4ADE94; --success-soft:#133326;
+      --warn:#F5B94D; --warn-soft:#362A12;
+      --crit:#F2776D; --crit-soft:#391B18;
+      --violet:#B49AF0; --violet-soft:#291F3E;
     }
   }
   :root[data-theme="dark"]{
-    --ink:#e8efed; --paper:#101817; --panel:#161f1e; --line:#2a3735; --muted:#8ea19d;
-    --teal:#4fa89f; --teal-soft:#1e3a37; --teal-ink:#a8e0d8;
-    --lemon:#d5e64f; --lemon-soft:#33380f; --lemon-ink:#e4f07a;
-    --info:#89b0e8; --info-soft:#1e2c40;
-    --success:#5cbf82; --success-soft:#1c3628; --warn:#e0b45a; --warn-soft:#3a3018;
-    --crit:#e58c84; --crit-soft:#3d2320;
-    --violet:#b3a0e6; --violet-soft:#332c47;
+    --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
+    --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
+    --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
+    --info:#6FA8F5; --info-soft:#16233A;
+    --success:#4ADE94; --success-soft:#133326; --warn:#F5B94D; --warn-soft:#362A12;
+    --crit:#F2776D; --crit-soft:#391B18;
+    --violet:#B49AF0; --violet-soft:#291F3E;
   }
   :root[data-theme="light"]{
-    --ink:#16232a; --paper:#f4f6f4; --panel:#ffffff; --line:#dbe2df; --muted:#5c6b68;
-    --teal:#2c6e68; --teal-soft:#dcece9; --teal-ink:#184a45;
-    --lemon:#b9cc1f; --lemon-soft:#eef3cd; --lemon-ink:#5c6300;
-    --info:#3563a6; --info-soft:#e4ecf7;
-    --success:#2f7d4f; --success-soft:#e2f2e6; --warn:#a9750f; --warn-soft:#faf0da;
-    --crit:#b3423a; --crit-soft:#fbe6e3;
-    --violet:#6b5b95; --violet-soft:#e8e4f2;
+    --ink:#E7E9EC; --paper:#0A0B0D; --panel:#15171B; --line:#262A31; --muted:#8B909B;
+    --teal:#3FBFAE; --teal-soft:#12302C; --teal-ink:#8FE0D2;
+    --lemon:#D9C43C; --lemon-soft:#2E2A11; --lemon-ink:#EDE07A;
+    --info:#6FA8F5; --info-soft:#16233A;
+    --success:#4ADE94; --success-soft:#133326; --warn:#F5B94D; --warn-soft:#362A12;
+    --crit:#F2776D; --crit-soft:#391B18;
+    --violet:#B49AF0; --violet-soft:#291F3E;
   }
 
   *{box-sizing:border-box;}
@@ -127,7 +128,7 @@
 
   .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
   .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;}
-  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:var(--paper);}
   .btn.ghost{background:transparent;}
   .btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
 
@@ -153,7 +154,7 @@
   .periodbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
   .periodbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
   .periodbar .seg button{appearance:none;border:none;background:var(--panel);color:var(--muted);padding:7px 13px;font-size:12.3px;font-weight:700;cursor:pointer;}
-  .periodbar .seg button.active{background:var(--teal);color:#fff;}
+  .periodbar .seg button.active{background:var(--teal);color:var(--paper);}
   .periodbar .seg button.active.booking{background:var(--violet);}
   .periodbar input[type=date]{font:inherit;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-size:12.3px;}
   .periodbar .label{font-size:11.5px;color:var(--muted);font-weight:600;}
@@ -653,6 +654,7 @@
       p.outsourcingCosts = p.outsourcingCosts || [];
       p.assignments = p.assignments || [];
       p.milestones = p.milestones || emptyMilestones();
+      p.contracts = p.contracts || [];
       p.assignments.forEach(function(a){ if(!a.role) a.role='개발'; });
       if(p.proposalId===undefined) p.proposalId=null;
       if(p.proposalCost==null) p.proposalCost=0;
@@ -1535,6 +1537,16 @@
     });
     return rows;
   }
+  // 협력업체 기준으로 전체 프로젝트를 훑어 그 업체와 맺은 계약을 모두 모음
+  function partnerContracts(partnerId){
+    var rows=[];
+    S.projects.forEach(function(p){
+      (p.contracts||[]).forEach(function(c){
+        if(c.partnerId===partnerId) rows.push({project:p, contract:c});
+      });
+    });
+    return rows;
+  }
 
   function renderExternalRegistry(kind){
     var isPartner = kind==='partner';
@@ -1569,6 +1581,21 @@
             '<button class="iconbtn" data-action="remove-partner-solution" data-partner="'+x.id+'" data-solution="'+s.id+'">삭제</button></div>';
         }).join('')) || '<p class="sub">등록된 솔루션이 없습니다.</p>';
         var solutionCatOpts = SW_CATEGORY_OPTIONS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+        var contractListHtml = '';
+        if(isPartner){
+          var pcRows = partnerContracts(x.id);
+          var pcTotal = pcRows.reduce(function(a,r){return a+numOr0(r.contract.amount);},0);
+          var pcRowsHtml = pcRows.map(function(r){
+            return '<tr><td>'+esc(r.project.code)+' '+esc(r.project.name)+'</td><td>'+esc(r.contract.name)+'</td>'+
+              '<td class="num">'+esc(r.contract.startDate||'-')+' ~ '+esc(r.contract.endDate||'-')+'</td>'+
+              '<td class="right num" style="font-weight:700">'+won(r.contract.amount)+'</td>'+
+              '<td class="center">'+((r.contract.files||[]).length)+'건</td></tr>';
+          }).join('') || '<tr class="empty-row"><td colspan="5">등록된 계약이 없습니다.</td></tr>';
+          contractListHtml = '<h3 style="font-size:12.5px;color:var(--muted);margin:14px 0 6px">계약 내역(전체 프로젝트)</h3>'+
+            '<div class="twrap"><table><thead><tr><th>프로젝트</th><th>계약명</th><th>계약기간</th><th class="right">계약금액</th><th class="center">첨부파일</th></tr></thead><tbody>'+pcRowsHtml+
+            (pcRows.length? '<tr class="subtotal"><td colspan="3">계약금액 합계</td><td class="right num" style="color:var(--teal-ink)">'+won(pcTotal)+'</td><td></td></tr>' : '')+
+            '</tbody></table></div>';
+        }
         var contactDetail = isPartner? (
           '<div class="grid cols-2" style="margin-bottom:10px">'+
             '<div class="refbox"><h3>영업담당</h3><div class="row"><span>이름</span><span>'+esc(x.salesContact?x.salesContact.name:'-')+'</span></div><div class="row"><span>연락처</span><span class="num">'+esc(x.salesContact?x.salesContact.phone:'-')+'</span></div><div class="row"><span>이메일</span><span>'+esc(x.salesContact?x.salesContact.email:'-')+'</span></div></div>'+
@@ -1590,7 +1617,7 @@
           }).join('') || '<p class="sub">단가 변경 이력이 없습니다. (현재 단가: '+won(x.unitPrice)+')</p>';
           rateHistHtml = '<h3 style="font-size:12.5px;color:var(--muted);margin:0 0 6px">기본 단가 변경 이력</h3>'+rateRows;
         }
-        histRow = '<tr><td colspan="8" style="background:var(--paper)"><div style="padding:10px 4px">'+contactDetail+rateHistHtml+'<h3 style="font-size:12.5px;color:var(--muted);margin:14px 0 6px">과거 참여 프로젝트</h3>'+histRows+'</div></td></tr>';
+        histRow = '<tr><td colspan="8" style="background:var(--paper)"><div style="padding:10px 4px">'+contactDetail+contractListHtml+rateHistHtml+'<h3 style="font-size:12.5px;color:var(--muted);margin:14px 0 6px">과거 참여 프로젝트</h3>'+histRows+'</div></td></tr>';
       }
       return mainRow+histRow;
     }).join('') || '<tr class="empty-row"><td colspan="8">등록된 항목이 없습니다.</td></tr>';
@@ -2294,6 +2321,41 @@
       '<div class="twrap"><table><thead><tr><th>항목</th><th>산정기준</th><th class="right">수량</th><th class="right">단가</th><th class="right">금액</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
 
+  function inContracts(p){
+    var partnerOpts = S.partners.map(function(x){return opt(x.id, x.name+' · '+x.field);}).join('');
+    var rows = (p.contracts||[]).map(function(c){
+      var pt = partner(c.partnerId);
+      var fileChips = (c.files||[]).map(function(f){
+        return '<span class="filechip">'+esc(f.category)+': '+esc(f.name)+'<button type="button" data-action="remove-contract-file" data-contract="'+c.id+'" data-file="'+f.id+'">×</button></span>';
+      }).join(' ') || '<span class="sub">첨부 없음</span>';
+      return '<tr><td>'+esc(pt?pt.name:'(삭제된 업체)')+'</td><td>'+esc(c.name)+'</td>'+
+        '<td class="num">'+esc(c.startDate||'-')+' ~ '+esc(c.endDate||'-')+'</td>'+
+        '<td class="right num" style="font-weight:700">'+won(c.amount)+'</td>'+
+        '<td>'+esc(c.description||'')+'</td>'+
+        '<td><div style="display:flex;flex-wrap:wrap;gap:4px">'+fileChips+'</div></td>'+
+        '<td class="right"><button class="iconbtn" data-action="remove-contract" data-id="'+c.id+'">삭제</button></td></tr>';
+    }).join('') || '<tr class="empty-row"><td colspan="7">등록된 계약이 없습니다.</td></tr>';
+    var totalAmount = (p.contracts||[]).reduce(function(a,c){return a+numOr0(c.amount);},0);
+
+    return '<div class="panel"><h2>협력업체 계약관리</h2><p class="sub">협력업체를 선택하고 계약명·기간·금액·내용을 입력한 뒤, 계약서·견적서·기타 파일(비교견적 등)을 첨부합니다. 등록한 계약은 협력업체 관리 화면에서도 업체별로 모아볼 수 있습니다.</p>'+
+      '<form data-form="contractForm" class="grid cols-4">'+
+        '<div class="field"><label>협력업체 <span class="req">*</span></label><select name="partnerId" required><option value="">선택</option>'+partnerOpts+'</select></div>'+
+        '<div class="field" style="grid-column:span 2"><label>계약명 <span class="req">*</span></label><input name="name" required></div>'+
+        '<div class="field"><label>계약금액(원)</label><input class="num" type="number" name="amount"></div>'+
+        '<div class="field"><label>계약 시작일</label><input type="date" name="startDate"></div>'+
+        '<div class="field"><label>계약 종료일</label><input type="date" name="endDate"></div>'+
+        '<div class="field" style="grid-column:span 2"><label>내용</label><input name="description" placeholder="계약 범위/특이사항"></div>'+
+        '<div class="field"><label>계약서 첨부</label><input type="file" name="contractDoc"></div>'+
+        '<div class="field"><label>견적서 첨부</label><input type="file" name="quoteDoc"></div>'+
+        '<div class="field" style="grid-column:span 2"><label>기타 파일(비교견적 등, 복수 첨부 가능)</label><input type="file" name="otherDocs" multiple></div>'+
+        '<div class="btnrow" style="grid-column:1/-1"><button class="btn primary" type="submit">계약 등록</button></div>'+
+      '</form>'+
+      '<div class="twrap"><table><thead><tr><th>협력업체</th><th>계약명</th><th>계약기간</th><th class="right">계약금액</th><th>내용</th><th>첨부파일</th><th></th></tr></thead><tbody>'+rows+
+      '<tr class="subtotal"><td colspan="3">계약금액 합계</td><td class="right num">'+won(totalAmount)+'</td><td colspan="3"></td></tr>'+
+      '</tbody></table></div>'+
+    '</div>';
+  }
+
   // ==================================================================
   //  PROJECT DETAIL — OUTPUT sub-views (read-only)
   // ==================================================================
@@ -2409,13 +2471,14 @@
 
     var body='';
     if(mode==='input'){
-      var itabs=[{k:'basic',l:'기본정보'},{k:'labor',l:'인력투입'},{k:'outsourcing',l:'외주비용'},{k:'indirect',l:'간접비'}];
+      var itabs=[{k:'basic',l:'기본정보'},{k:'labor',l:'인력투입'},{k:'outsourcing',l:'외주비용'},{k:'indirect',l:'간접비'},{k:'contracts',l:'계약관리'}];
       body += '<div class="subtabs">'+itabs.map(function(t){return '<button class="'+(inputTab===t.k?'active':'')+'" data-action="set-project-tab" data-scope="input" data-tab="'+t.k+'">'+t.l+'</button>';}).join('')+'</div>';
       if(linkedPP) body += '<p class="sub" style="margin-top:-6px">입찰 일정·사전영업보고서는 <button class="linkbtn" data-action="open-proposal" data-id="'+linkedPP.id+'">제안관리 &gt; '+esc(linkedPP.code)+'</button> 에서 관리합니다.</p>';
       if(inputTab==='basic') body+=inBasic(p);
       else if(inputTab==='labor') body+=inLabor(p);
       else if(inputTab==='outsourcing') body+=inOutsourcing(p);
       else if(inputTab==='indirect') body+=inIndirect(p);
+      else if(inputTab==='contracts') body+=inContracts(p);
     } else {
       var otabs=[{k:'summary',l:'원가요약'},{k:'matrix',l:'인력투입 현황'},{k:'ledger',l:'외주 내역'},{k:'indirectout',l:'간접비 내역'},{k:'revisions',l:'원가 변경이력'}];
       body += '<div class="subtabs">'+otabs.map(function(t){return '<button class="'+(outputTab===t.k?'active':'')+'" data-action="set-project-tab" data-scope="output" data-tab="'+t.k+'">'+t.l+'</button>';}).join('')+'</div>';
@@ -2701,7 +2764,7 @@
       var newProj = { id:uid('prj'), code:pp.code.replace(/^PP-/,''), name:pp.name, bizType:pp.bizType||'SI', clientId:pp.clientId, pmId:pp.pmCandidateId||null,
         contractAmount: pp.presales.estimatedBudget||null, customerBudget: pp.presales.estimatedBudget||null, sgaRate:'',
         startDate:'', endDate:'', proposalId:pp.id, proposalCost:costSum, consortium:{isConsortium:false, role:'주사업자', members:[]},
-        milestones: emptyMilestones(),
+        milestones: emptyMilestones(), contracts:[],
         assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[
           {id:uid('rv'), date:new Date().toISOString().slice(0,10), reason:'제안 수주로 프로젝트 생성 (제안비용 '+won(costSum)+' 반영)', by:currentActorName()}
         ] };
@@ -2722,6 +2785,18 @@
     'remove-assignment': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.assignments=p.assignments.filter(function(a){return a.id!==btn.dataset.id;}); save(); render(); },
     'remove-outsourcing': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.outsourcingCosts=p.outsourcingCosts.filter(function(o){return o.id!==btn.dataset.id;}); save(); render(); },
     'remove-indirect': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.indirectCosts=p.indirectCosts.filter(function(o){return o.id!==btn.dataset.id;}); save(); render(); },
+    'remove-contract': function(btn){
+      var p=project(S.ui.currentProjectId); if(!p) return;
+      p.contracts = (p.contracts||[]).filter(function(c){return c.id!==btn.dataset.id;});
+      save(); render();
+    },
+    'remove-contract-file': function(btn){
+      var p=project(S.ui.currentProjectId); if(!p) return;
+      var contract = (p.contracts||[]).filter(function(c){return c.id===btn.dataset.contract;})[0];
+      if(!contract) return;
+      contract.files = (contract.files||[]).filter(function(f){return f.id!==btn.dataset.file;});
+      save(); render();
+    },
     'remove-consortium-member': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.consortium.members=p.consortium.members.filter(function(m){return m.id!==btn.dataset.id;}); save(); render(); },
     'remove-milestone-file': function(btn){ var p=project(S.ui.currentProjectId); if(!p) return; p.milestones[btn.dataset.key].file=null; save(); render(); }
   };
@@ -2810,7 +2885,7 @@
         contractAmount:fd.get('contractAmount')?Number(fd.get('contractAmount')):null, customerBudget:fd.get('customerBudget')?Number(fd.get('customerBudget')):null,
         sgaRate: fd.get('sgaRate')===''?'':Number(fd.get('sgaRate')), startDate:'', endDate:'',
         proposalId:null, proposalCost:0, consortium:{isConsortium:false, role:'주사업자', members:[]},
-        milestones:emptyMilestones(), assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[] };
+        milestones:emptyMilestones(), contracts:[], assignments:[], outsourcingCosts:[], indirectCosts:[], costRevisions:[] };
       S.projects.push(data); save(); render();
     },
     proposalForm: function(fd){
@@ -2962,6 +3037,23 @@
       p.costRevisions = p.costRevisions||[];
       p.costRevisions.push({id:uid('rv'), date:new Date().toISOString().slice(0,10), reason:fd.get('reason'), by:currentActorName()});
       save(); render();
+    },
+    contractForm: function(fd){
+      var p=project(S.ui.currentProjectId); if(!p) return;
+      if(!requireFields(fd, [{name:'partnerId', label:'협력업체'},{name:'name', label:'계약명'}])) return;
+      var files = [];
+      var contractDoc = fd.get('contractDoc');
+      if(contractDoc && contractDoc.name){ files.push({id:uid('cf'), category:'계약서', name:contractDoc.name, size:contractDoc.size}); }
+      var quoteDoc = fd.get('quoteDoc');
+      if(quoteDoc && quoteDoc.name){ files.push({id:uid('cf'), category:'견적서', name:quoteDoc.name, size:quoteDoc.size}); }
+      var others = fd.getAll('otherDocs');
+      others.forEach(function(f){ if(f && f.name){ files.push({id:uid('cf'), category:'기타', name:f.name, size:f.size}); } });
+      p.contracts = p.contracts||[];
+      p.contracts.push({id:uid('ctr'), partnerId:fd.get('partnerId'), name:fd.get('name'), startDate:fd.get('startDate'),
+        endDate:fd.get('endDate'), amount:Number(fd.get('amount'))||0, description:fd.get('description'), files:files,
+        createdAt:new Date().toISOString().slice(0,10)});
+      save(); render();
+      showToast('계약이 등록되었습니다.');
     },
     indirectForm: function(fd){
       var p=project(S.ui.currentProjectId); if(!p) return;
