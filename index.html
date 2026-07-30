@@ -736,6 +736,9 @@
   }
 
   function empSgaRate(emp){ return (emp.sgaRate!==''&&emp.sgaRate!=null) ? Number(emp.sgaRate) : Number(S.settings.defaultSgaRate); }
+  function empMonthlySgaInclusive(emp){
+    return emp.sgaType==='fixed' ? (numOr0(emp.unitPrice)+numOr0(emp.sgaFixedAmount)) : Math.round(numOr0(emp.unitPrice)*(1+empSgaRate(emp)/100));
+  }
 
   function computeAssignment(a,p){
     var emp = employee(a.employeeId);
@@ -1074,6 +1077,25 @@
       showToast('엑셀 파일 생성 중 오류: '+(err&&err.message?err.message:err), 'warn');
     }
   }
+  // 수식이 포함된 시트를 만들 때 쓰는 저수준 유틸: aoa로 뼈대를 만들고, 특정 셀을 수식/날짜 형식으로 덮어씁니다.
+  function writeFormulaSheet(filename, sheetName, aoa, cellFn){
+    if(!xlsxAvailable()){ xlsxWarnUnavailable(); return; }
+    try{
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      if(cellFn) cellFn(ws);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      XLSX.writeFile(wb, filename);
+    }catch(err){
+      showToast('엑셀 파일 생성 중 오류: '+(err&&err.message?err.message:err), 'warn');
+    }
+  }
+  function setFormula(ws, ref, formula, value){
+    ws[ref] = {t:'n', f:formula, v:(value==null?0:value)};
+  }
+  function setDateFmt(ws, ref){
+    if(ws[ref]) ws[ref].z = 'yyyy-mm-dd';
+  }
   // callback(dataRows) — 헤더 행을 제외한 나머지 행(각 행은 셀 값 배열)만 전달
   function importSheetFile(fileInput, callback){
     if(!xlsxAvailable()){ xlsxWarnUnavailable(); return; }
@@ -1101,7 +1123,7 @@
 
   // ---- 엑셀 행 <-> 데이터 매핑 (각 엔티티별) ----
   function wbsTaskToRow(t, reportDate){
-    return [t.domain, t.activity, t.name, t.startDate||'', t.endDate||'',
+    return [t.domain, t.activity, t.name, t.startDate? new Date(t.startDate) : '', t.endDate? new Date(t.endDate) : '',
       wbsPlannedRate(t, reportDate).toFixed(1), numOr0(t.actualRate), numOr0(t.weight), t.assignee||''];
   }
   function rowToWbsTask(row){
@@ -2540,7 +2562,7 @@
     }).join('') || '<tr class="empty-row"><td colspan="7">등록된 계약이 없습니다.</td></tr>';
     var totalAmount = (p.contracts||[]).reduce(function(a,c){return a+numOr0(c.amount);},0);
 
-    return '<div class="panel"><h2>협력업체 계약관리</h2><p class="sub">협력업체를 선택하고 계약명·기간·금액·내용을 입력한 뒤, 계약서·견적서·기타 파일(비교견적 등)을 첨부합니다. 등록한 계약은 협력업체 관리 화면에서도 업체별로 모아볼 수 있습니다. 엑셀로 내려받아 계약 현황 보고 자료로 제출할 수 있습니다.</p>'+
+    return '<div class="panel"><h2>협력업체 계약관리</h2><p class="sub">협력업체를 선택하고 계약명·기간·금액·내용을 입력한 뒤, 계약서·견적서·기타 파일(비교견적 등)을 첨부합니다. 등록한 계약은 협력업체 관리 화면에서도 업체별로 모아볼 수 있습니다. 엑셀로 내려받아 계약 현황 보고 자료로 제출할 수 있으며, 계약금액 합계는 실제 SUM 수식으로 들어가 엑셀에서 금액을 수정해도 자동으로 갱신됩니다.</p>'+
       '<div class="btnrow" style="margin-bottom:12px"><button class="btn ghost" type="button" data-action="export-contracts">엑셀 다운로드(계약 현황)</button></div>'+
       '<form data-form="contractForm" class="grid cols-4">'+
         '<div class="field"><label>협력업체 <span class="req">*</span></label><select name="partnerId" required><option value="">선택</option>'+partnerOpts+'</select></div>'+
@@ -2591,7 +2613,7 @@
     }).join('') || '<p class="sub">등록된 WBS 작업이 없습니다. 아래 양식으로 Domain·Activity·Task를 추가하세요.</p>';
 
     return '<div class="panel"><h2>WBS(작업분류체계) &middot; 진행현황</h2>'+
-      '<p class="sub">Domain · Activity · Task 단위로 일정과 가중치를 등록하면, 기준일 대비 계획 진도율과 실제 진도율을 비교해 공정율(실적÷계획)을 계산합니다. 엑셀로 다운받아 여러 건을 한 번에 채운 뒤 업로드하면 전체가 반영되며, 다운로드한 파일은 그대로 월간보고 제출 자료로 쓸 수 있습니다.</p>'+
+      '<p class="sub">Domain · Activity · Task 단위로 일정과 가중치를 등록하면, 기준일 대비 계획 진도율과 실제 진도율을 비교해 공정율(실적÷계획)을 계산합니다. 엑셀로 다운받아 여러 건을 한 번에 채운 뒤 업로드하면 전체가 반영되며, 다운로드한 파일은 그대로 월간보고 제출 자료로 쓸 수 있습니다. 다운로드한 파일의 계획완료율(%)은 실제 엑셀 수식이라 시작일·종료일·기준일(우측 상단 셀)을 고치면 자동으로 재계산됩니다.</p>'+
       '<div class="btnrow" style="margin-bottom:12px">'+
         '<button class="btn ghost" type="button" data-action="export-wbs">엑셀 다운로드</button>'+
         '<input type="file" accept=".xlsx,.xls" data-wbs-file-input>'+
@@ -3075,8 +3097,25 @@
     // ---- 엑셀 다운로드/업로드 (1순위: WBS·인력, 2순위: 인력투입·연구과제예산, 3순위: 협력업체·프리랜서·계약·고객사) ----
     'export-wbs': function(){
       var p = project(S.ui.currentProjectId); if(!p) return;
-      var rows = (p.wbs.tasks||[]).map(function(t){ return wbsTaskToRow(t, p.wbs.reportDate); });
-      exportSheet('WBS_'+p.code+'.xlsx', 'WBS', ['Domain','Activity','Task','시작일','종료일','계획완료율(%)','실제완료율(%)','가중치(%)','담당'], rows);
+      var tasks = p.wbs.tasks||[];
+      var headers = ['Domain','Activity','Task','시작일','종료일','계획완료율(%)','실제완료율(%)','가중치(%)','담당'];
+      var headerRow = headers.concat(['', '기준일(수정 시 계획완료율 자동 재계산)', new Date(p.wbs.reportDate)]);
+      var rows = tasks.map(function(t){ return wbsTaskToRow(t, p.wbs.reportDate); });
+      var totalRow = ['합계','','','','','','', tasks.reduce(function(a,t){return a+numOr0(t.weight);},0), ''];
+      writeFormulaSheet('WBS_'+p.code+'.xlsx', 'WBS', [headerRow].concat(rows).concat([totalRow]), function(ws){
+        setDateFmt(ws, 'L1');
+        tasks.forEach(function(t, i){
+          var r = i+2;
+          if(t.startDate) setDateFmt(ws, 'D'+r);
+          if(t.endDate) setDateFmt(ws, 'E'+r);
+          var planVal = wbsPlannedRate(t, p.wbs.reportDate);
+          var f = 'IF(OR(D'+r+'="",E'+r+'=""),0,IF(E'+r+'<=D'+r+',0,IF($L$1<=D'+r+',0,IF($L$1>=E'+r+',100,(($L$1-D'+r+')/(E'+r+'-D'+r+'))*100))))';
+          setFormula(ws, 'F'+r, f, planVal);
+        });
+        var totalRowNum = tasks.length+2;
+        var weightSum = tasks.reduce(function(a,t){return a+numOr0(t.weight);},0);
+        if(tasks.length>0) setFormula(ws, 'H'+totalRowNum, 'SUM(H2:H'+(totalRowNum-1)+')', weightSum);
+      });
     },
     'import-wbs': function(){
       var p = project(S.ui.currentProjectId); if(!p) return;
@@ -3092,8 +3131,26 @@
       showToast('WBS 작업 '+p.wbs.tasks.length+'건이 엑셀에서 반영되었습니다.');
     },
     'export-employees': function(){
-      var rows = S.employees.map(employeeToRow);
-      exportSheet('직원목록.xlsx', '직원', ['이름','부서','직급','직무','상시비가동(Y/N)','월단가','판관비방식(percent/fixed)','판관비율(%)','판관비정액','연봉','권한(admin/pm/member)','이메일','연락처','입사일','재직여부(Y/N)','기술스택(콤마구분)'], rows);
+      var emps = S.employees;
+      var headers = ['이름','부서','직급','직무','상시비가동(Y/N)','월단가','판관비방식(percent/fixed)','판관비율(%)','판관비정액','연봉','권한(admin/pm/member)','이메일','연락처','입사일','재직여부(Y/N)','기술스택(콤마구분)'];
+      headers = headers.concat(['연봉÷12(참고,원)', '판관비포함월단가(자동계산,원)']);
+      var headerRow = headers.concat(['', '전사기본판관비율(%, 개인 판관비율 미입력 시 적용)', S.settings.defaultSgaRate||0]);
+      var rows = emps.map(employeeToRow);
+      var salarySum = emps.reduce(function(a,e){return a+numOr0(e.salary);},0);
+      var unitPriceSum = emps.reduce(function(a,e){return a+numOr0(e.unitPrice);},0);
+      var totalRow = ['합계','','','','','','','','', salarySum,'','','','','',''];
+      writeFormulaSheet('직원목록.xlsx', '직원', [headerRow].concat(rows).concat([totalRow]), function(ws){
+        emps.forEach(function(e, i){
+          var r = i+2;
+          setFormula(ws, 'Q'+r, 'ROUND(J'+r+'/12,0)', Math.round(numOr0(e.salary)/12));
+          setFormula(ws, 'R'+r, 'IF(G'+r+'="fixed",F'+r+'+I'+r+',ROUND(F'+r+'*(1+IF(H'+r+'="",$U$1,H'+r+')/100),0))', empMonthlySgaInclusive(e));
+        });
+        var totalRowNum = emps.length+2;
+        if(emps.length>0){
+          setFormula(ws, 'J'+totalRowNum, 'SUM(J2:J'+(totalRowNum-1)+')', salarySum);
+          setFormula(ws, 'F'+totalRowNum, 'SUM(F2:F'+(totalRowNum-1)+')', unitPriceSum);
+        }
+      });
     },
     'import-employees': function(){
       importSheetFile(document.querySelector('[data-employee-file-input]'), function(dataRows){
@@ -3111,8 +3168,15 @@
     },
     'export-assignments': function(){
       var p = project(S.ui.currentProjectId); if(!p) return;
-      var rows = (p.assignments||[]).map(assignmentToRow);
-      exportSheet('인력투입_'+p.code+'.xlsx', '인력투입', ['이름','참여율(%)','역할'], rows);
+      var assignments = p.assignments||[];
+      var headers = ['이름','참여율(%)','역할'];
+      var rows = assignments.map(assignmentToRow);
+      var ratioSum = assignments.reduce(function(a,x){return a+numOr0(x.ratio);},0);
+      var totalRow = ['합계(참여율)', ratioSum, ''];
+      writeFormulaSheet('인력투입_'+p.code+'.xlsx', '인력투입', [headers].concat(rows).concat([totalRow]), function(ws){
+        var totalRowNum = assignments.length+2;
+        if(assignments.length>0) setFormula(ws, 'B'+totalRowNum, 'SUM(B2:B'+(totalRowNum-1)+')', ratioSum);
+      });
     },
     'import-assignments': function(){
       var p = project(S.ui.currentProjectId); if(!p) return;
@@ -3135,8 +3199,25 @@
     },
     'export-rnd-items': function(){
       var pp = proposal(S.ui.currentProposalId); if(!pp) return;
-      var rows = (pp.rndBudget.items||[]).map(rndItemToRow);
-      exportSheet('연구과제예산_'+pp.code+'.xlsx', '예산편성', ['비목','재원구분(gov/cashSelf/inkindSelf)','내용','금액'], rows);
+      var items = pp.rndBudget.items||[];
+      var headers = ['비목','재원구분(gov/cashSelf/inkindSelf)','내용','금액'];
+      var rows = items.map(rndItemToRow);
+      var fundSources = [{key:'gov', label:'정부지원금 소계'}, {key:'cashSelf', label:'현금자부담 소계'}, {key:'inkindSelf', label:'현물자부담 소계'}];
+      var sumByKey = {};
+      fundSources.forEach(function(fs){ sumByKey[fs.key] = items.filter(function(it){return it.fundSource===fs.key;}).reduce(function(a,it){return a+numOr0(it.amount);},0); });
+      var grandTotal = items.reduce(function(a,it){return a+numOr0(it.amount);},0);
+      var extraRows = fundSources.map(function(fs){ return [fs.label,'','', sumByKey[fs.key]]; }).concat([['총계','','', grandTotal]]);
+      writeFormulaSheet('연구과제예산_'+pp.code+'.xlsx', '예산편성', [headers].concat(rows).concat(extraRows), function(ws){
+        var dataLastRow = items.length+1;
+        if(items.length>0){
+          fundSources.forEach(function(fs, i){
+            var rowNum = items.length+2+i;
+            setFormula(ws, 'D'+rowNum, 'SUMIF(B2:B'+dataLastRow+',"'+fs.key+'",D2:D'+dataLastRow+')', sumByKey[fs.key]);
+          });
+          var grandRowNum = items.length+2+fundSources.length;
+          setFormula(ws, 'D'+grandRowNum, 'SUM(D2:D'+dataLastRow+')', grandTotal);
+        }
+      });
     },
     'import-rnd-items': function(){
       var pp = proposal(S.ui.currentProposalId); if(!pp) return;
@@ -3197,8 +3278,15 @@
     },
     'export-contracts': function(){
       var p = project(S.ui.currentProjectId); if(!p) return;
-      var rows = (p.contracts||[]).map(contractToRow);
-      exportSheet('계약현황_'+p.code+'.xlsx', '계약현황', ['협력업체','계약명','시작일','종료일','계약금액','내용','첨부파일수'], rows);
+      var contracts = p.contracts||[];
+      var headers = ['협력업체','계약명','시작일','종료일','계약금액','내용','첨부파일수'];
+      var rows = contracts.map(contractToRow);
+      var amountSum = contracts.reduce(function(a,c){return a+numOr0(c.amount);},0);
+      var totalRow = ['합계','','','', amountSum,'',''];
+      writeFormulaSheet('계약현황_'+p.code+'.xlsx', '계약현황', [headers].concat(rows).concat([totalRow]), function(ws){
+        var totalRowNum = contracts.length+2;
+        if(contracts.length>0) setFormula(ws, 'E'+totalRowNum, 'SUM(E2:E'+(totalRowNum-1)+')', amountSum);
+      });
     },
     'export-clients': function(){
       var rows = S.clients.map(clientToRow);
